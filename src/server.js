@@ -9,6 +9,7 @@ const adminRoutes   = require('./admin');
 const app = express();
 
 app.use(express.json());
+// Serve only public static assets (privacy page, etc.) — the admin UI is server-rendered
 app.use(express.static(path.join(__dirname, '..', 'public'), { extensions: ['html'] }));
 
 // OAuth
