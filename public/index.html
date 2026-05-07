@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Order Scrambler</title>
+  <!-- App Bridge 4 (CDN) — required for embedded Shopify admin -->
+  <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -12,7 +14,7 @@
       color: #202223;
       padding: 24px;
     }
-    .page { max-width: 720px; margin: 0 auto; }
+    .page { max-width: 760px; margin: 0 auto; }
     h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
     .subtitle { color: #6d7175; font-size: 14px; margin-bottom: 24px; }
     .card {
@@ -36,9 +38,10 @@
       border-radius: 6px;
       padding: 12px 16px;
       font-family: monospace;
-      font-size: 18px;
+      font-size: 22px;
+      font-weight: 600;
       text-align: center;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
       color: #202223;
     }
     .preview-label { text-align: center; font-size: 12px; color: #6d7175; margin-top: 6px; }
@@ -59,13 +62,20 @@
     th { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e1e3e5; color: #6d7175; font-weight: 500; }
     td { padding: 8px 10px; border-bottom: 1px solid #f6f6f7; font-family: monospace; }
     td.name { font-family: inherit; }
-    .empty { text-align: center; color: #6d7175; padding: 24px; }
+    .empty { text-align: center; color: #6d7175; padding: 24px; font-family: inherit; }
+    .badge {
+      display: inline-block; background: #f1f8f5; color: #008060;
+      border: 1px solid #b7ddd0; border-radius: 100px;
+      font-size: 11px; font-weight: 600; padding: 2px 8px; margin-left: 8px;
+    }
+    .footer { text-align: center; font-size: 12px; color: #6d7175; margin-top: 24px; }
+    .footer a { color: #6d7175; }
   </style>
 </head>
 <body>
 <div class="page">
-  <h1>Order Scrambler</h1>
-  <p class="subtitle">Randomizes customer-facing order IDs so competitors can't infer order volume.</p>
+  <h1>Order Scrambler <span class="badge">Active</span></h1>
+  <p class="subtitle">Rewrites customer-facing order IDs to random strings — competitors can no longer infer your order volume.</p>
 
   <div class="card">
     <h2>Configuration</h2>
@@ -81,17 +91,17 @@
       <div>
         <label for="prefix">Prefix</label>
         <input type="text" id="prefix" maxlength="8" placeholder="ORD" />
-        <p class="hint">Letters and numbers only, max 8 chars.</p>
+        <p class="hint">Letters/numbers only, max 8 chars.</p>
       </div>
       <div>
-        <label for="length">Random length</label>
+        <label for="length">Code length</label>
         <input type="number" id="length" min="4" max="12" />
-        <p class="hint">Characters after the prefix (4–12).</p>
+        <p class="hint">Random chars after prefix (4–12).</p>
       </div>
     </div>
 
     <div class="preview" id="preview">#ORD-K7X4M2</div>
-    <p class="preview-label">Preview (regenerates as you type)</p>
+    <p class="preview-label">Preview (live)</p>
 
     <div style="margin-top:16px">
       <button id="save-btn">Save settings</button>
@@ -105,24 +115,32 @@
       <thead>
         <tr>
           <th>Order ID</th>
-          <th>Original name</th>
-          <th>Scrambled name</th>
+          <th>Original</th>
+          <th>Scrambled to</th>
           <th>When</th>
         </tr>
       </thead>
       <tbody id="log-body">
-        <tr><td colspan="4" class="empty">No orders scrambled yet.</td></tr>
+        <tr><td colspan="4" class="empty">No orders scrambled yet. Place a test order to verify.</td></tr>
       </tbody>
     </table>
   </div>
+
+  <p class="footer"><a href="/privacy" target="_blank">Privacy Policy</a> &middot; <a href="https://github.com/gado-ships-it/shopify-order-scrambler" target="_blank">GitHub</a></p>
 </div>
 
 <script>
   const shop = new URLSearchParams(location.search).get('shop') || '';
-  const qs = shop ? `?shop=${encodeURIComponent(shop)}` : '';
+  const qs   = shop ? `?shop=${encodeURIComponent(shop)}` : '';
+
+  // Initialise App Bridge 4 if running inside Shopify admin iframe
+  if (window.shopify) {
+    try { window.shopify.init(); } catch (_) {}
+  }
 
   const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const rand = (chars, n) => Array.from({length: n}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  const rand = (chars, n) =>
+    Array.from({length: n}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 
   function buildPreview(format, prefix, length) {
     const p = (prefix || 'ORD').toUpperCase();
@@ -140,60 +158,63 @@
       document.getElementById('length').value
     );
   }
-
-  ['format','prefix','length'].forEach(id => {
-    document.getElementById(id).addEventListener('input', updatePreview);
-  });
+  ['format','prefix','length'].forEach(id =>
+    document.getElementById(id).addEventListener('input', updatePreview)
+  );
 
   async function loadConfig() {
-    const res = await fetch(`/api/config${qs}`);
-    if (!res.ok) return;
-    const cfg = await res.json();
-    document.getElementById('format').value  = cfg.format;
-    document.getElementById('prefix').value  = cfg.prefix;
-    document.getElementById('length').value  = cfg.length;
-    updatePreview();
+    try {
+      const res = await fetch(`/api/config${qs}`);
+      if (!res.ok) return;
+      const cfg = await res.json();
+      document.getElementById('format').value = cfg.format;
+      document.getElementById('prefix').value = cfg.prefix;
+      document.getElementById('length').value = cfg.length;
+      updatePreview();
+    } catch (_) {}
   }
 
   async function saveConfig() {
     const btn = document.getElementById('save-btn');
     btn.disabled = true;
-    const body = {
-      format: document.getElementById('format').value,
-      prefix: document.getElementById('prefix').value,
-      length: document.getElementById('length').value,
-    };
-    const res = await fetch(`/api/config${qs}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    btn.disabled = false;
-    if (res.ok) {
-      const msg = document.getElementById('saved-msg');
-      msg.style.display = 'inline';
-      setTimeout(() => { msg.style.display = 'none'; }, 2000);
+    try {
+      const res = await fetch(`/api/config${qs}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          format: document.getElementById('format').value,
+          prefix: document.getElementById('prefix').value,
+          length: document.getElementById('length').value,
+        }),
+      });
+      if (res.ok) {
+        const msg = document.getElementById('saved-msg');
+        msg.style.display = 'inline';
+        setTimeout(() => { msg.style.display = 'none'; }, 2000);
+      }
+    } finally {
+      btn.disabled = false;
     }
   }
 
   async function loadLogs() {
-    const res = await fetch(`/api/logs${qs}`);
-    if (!res.ok) return;
-    const logs = await res.json();
-    const tbody = document.getElementById('log-body');
-    if (!logs.length) return;
-    tbody.innerHTML = logs.map(r => `
-      <tr>
-        <td>${r.order_id}</td>
-        <td class="name">${r.original_name || '—'}</td>
-        <td>${r.new_name}</td>
-        <td class="name">${new Date(r.created_at * 1000).toLocaleString()}</td>
-      </tr>
-    `).join('');
+    try {
+      const res = await fetch(`/api/logs${qs}`);
+      if (!res.ok) return;
+      const logs = await res.json();
+      if (!logs.length) return;
+      document.getElementById('log-body').innerHTML = logs.map(r => `
+        <tr>
+          <td>${r.order_id}</td>
+          <td class="name">${r.original_name || '—'}</td>
+          <td>${r.new_name}</td>
+          <td class="name">${new Date(r.created_at * 1000).toLocaleString()}</td>
+        </tr>
+      `).join('');
+    } catch (_) {}
   }
 
   document.getElementById('save-btn').addEventListener('click', saveConfig);
-
   loadConfig();
   loadLogs();
 </script>
