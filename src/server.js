@@ -25,7 +25,7 @@ app.use('/', adminRoutes);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
 app.listen(config.PORT, () => {
-  console.log(`Order Scrambler running on port ${config.PORT}`);
+  console.log(`RON – Random Order Number running on port ${config.PORT}`);
   console.log(`HOST: ${config.HOST}`);
   if (!config.SHOPIFY_API_KEY) {
     console.warn('⚠  SHOPIFY_API_KEY not set — copy .env.example → .env and fill it in');

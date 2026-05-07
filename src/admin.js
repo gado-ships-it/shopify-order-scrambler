@@ -59,13 +59,13 @@ router.get('/app', (req, res) => {
 // Install landing page (for direct visitors who haven't installed yet)
 router.get('/install', (req, res) => {
   res.send(`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
-<title>Install Order Scrambler</title>
+<title>Install RON – Random Order Number</title>
 <style>body{font-family:-apple-system,sans-serif;max-width:480px;margin:80px auto;padding:0 24px;text-align:center}
 h1{font-size:22px;margin-bottom:8px}p{color:#6d7175;margin-bottom:24px}
 input{width:100%;padding:10px;border:1px solid #c9cccf;border-radius:6px;font-size:15px;margin-bottom:12px}
 button{background:#008060;color:#fff;border:none;border-radius:6px;padding:12px 24px;font-size:15px;cursor:pointer;width:100%}
 </style></head><body>
-<h1>Order Scrambler</h1>
+<h1>RON – Random Order Number</h1>
 <p>Enter your Shopify store URL to install.</p>
 <input id="shop" placeholder="yourstore.myshopify.com" autocomplete="off"/>
 <button onclick="go()">Install</button>
@@ -106,7 +106,7 @@ function buildPage(tok, shop) {
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Order Scrambler</title>
+  <title>RON – Random Order Number</title>
   <script src="https://cdn.shopify.com/shopifycloud/app-bridge.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -138,8 +138,8 @@ function buildPage(tok, shop) {
 </head>
 <body>
 <div class="page">
-  <h1>Order Scrambler <span class="badge">Active</span></h1>
-  <p class="subtitle">Rewrites customer-facing order IDs to random strings — competitors can no longer infer your order volume.</p>
+  <h1>RON <span class="badge">Active</span></h1>
+  <p class="subtitle">Random Order Number — rewrites customer-facing order IDs so competitors can't infer your volume.</p>
   <div class="card">
     <h2>Configuration</h2>
     <div class="row">

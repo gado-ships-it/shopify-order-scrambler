@@ -1,7 +1,7 @@
 {
-  "name": "shopify-order-scrambler",
+  "name": "ron-random-order-number",
   "version": "1.0.0",
-  "description": "Shopify app that randomizes customer-facing order IDs to prevent volume inference",
+  "description": "RON – Random Order Number: Shopify app that randomizes customer-facing order IDs to prevent volume inference",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
