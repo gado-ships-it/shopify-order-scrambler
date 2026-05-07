@@ -1,7 +1,15 @@
-const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 
-const db = new DatabaseSync(path.join(__dirname, '..', 'sessions.db'));
+// node:sqlite ships in Node 22+; fall back to better-sqlite3 on Node 20.
+const major = parseInt(process.version.slice(1).split('.')[0], 10);
+let Database;
+if (major >= 22) {
+  ({ DatabaseSync: Database } = require('node:sqlite'));
+} else {
+  Database = require('better-sqlite3');
+}
+
+const db = new Database(path.join(__dirname, '..', 'sessions.db'));
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS sessions (
@@ -27,13 +35,13 @@ db.exec(`
 `);
 
 const stmts = {
-  upsertSession:  db.prepare(`INSERT OR REPLACE INTO sessions (shop, access_token, scope) VALUES (?, ?, ?)`),
-  getSession:     db.prepare(`SELECT * FROM sessions WHERE shop = ?`),
-  deleteSession:  db.prepare(`DELETE FROM sessions WHERE shop = ?`),
-  getConfig:      db.prepare(`SELECT * FROM shop_config WHERE shop = ?`),
-  upsertConfig:   db.prepare(`INSERT OR REPLACE INTO shop_config (shop, format, prefix, length) VALUES (?, ?, ?, ?)`),
-  insertLog:      db.prepare(`INSERT INTO scramble_log (shop, order_id, original_name, new_name) VALUES (?, ?, ?, ?)`),
-  recentLogs:     db.prepare(`SELECT * FROM scramble_log WHERE shop = ? ORDER BY created_at DESC LIMIT ?`),
+  upsertSession: db.prepare(`INSERT OR REPLACE INTO sessions (shop, access_token, scope) VALUES (?, ?, ?)`),
+  getSession:    db.prepare(`SELECT * FROM sessions WHERE shop = ?`),
+  deleteSession: db.prepare(`DELETE FROM sessions WHERE shop = ?`),
+  getConfig:     db.prepare(`SELECT * FROM shop_config WHERE shop = ?`),
+  upsertConfig:  db.prepare(`INSERT OR REPLACE INTO shop_config (shop, format, prefix, length) VALUES (?, ?, ?, ?)`),
+  insertLog:     db.prepare(`INSERT INTO scramble_log (shop, order_id, original_name, new_name) VALUES (?, ?, ?, ?)`),
+  recentLogs:    db.prepare(`SELECT * FROM scramble_log WHERE shop = ? ORDER BY created_at DESC LIMIT ?`),
 };
 
 module.exports = {
